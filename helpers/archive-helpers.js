@@ -1,5 +1,7 @@
 var fs = require('fs');
+var url = require('url');
 var path = require('path');
+var helper = require('../web/http-helpers.js');
 var _ = require('underscore');
 
 /*
@@ -9,11 +11,33 @@ var _ = require('underscore');
  * customize it in any way you wish.
  */
 
-exports.paths = {
-  siteAssets: path.join(__dirname, '../web/public'),
-  archivedSites: path.join(__dirname, '../archives/sites'),
-  list: path.join(__dirname, '../archives/sites.txt')
+exports.rawPaths = {
+  siteAssets: '../web/public',
+  archivedSites: '../web/archives/sites',
+  list: path.join(__dirname, '../web/archives/sites.txt')
 };
+
+exports.paths = {
+  siteAssets: path.join(__dirname, exports.rawPaths.siteAssets),
+  archivedSites: path.join(__dirname, exports.rawPaths.archivedSites),
+  list: exports.rawPaths.list
+};
+
+exports.publicPath = function(url) {
+  return path.join( '/', url );
+}
+
+exports.archivePath = function(url) {
+  return path.join( '/archives/sites/', url );
+}
+
+exports.publicFilePath = function(url) {
+  return path.join( __dirname, exports.rawPaths.siteAssets, url );
+}
+
+exports.archiveFilePath = function(url) {
+  return path.join( __dirname, exports.rawPaths.archivedSites, url );
+}
 
 // Used for stubbing paths for tests, do not modify
 exports.initialize = function(pathsObj){
@@ -25,17 +49,40 @@ exports.initialize = function(pathsObj){
 // The following function names are provided to you to suggest how you might
 // modularize your code. Keep it clean!
 
-exports.readListOfUrls = function(){
+exports.readListOfUrls = function(callback){
+  fs.readFile(exports.paths.list, function(err, data) {
+    callback(data.toString().split('\n'));
+  });
 };
 
-exports.isUrlInList = function(){
+exports.isUrlInList = function(uri, callback){
+  exports.readListOfUrls(function(sites) {
+    callback(_.contains(sites, helper.urlhost(uri)));
+  });
 };
 
-exports.addUrlToList = function(){
+exports.addUrlToList = function(uri, callback){
+  exports.isUrlInList(uri, function(found) {
+    if (found) {
+      console.log('URL,', helper.urlhost(uri), 'already listed.');
+    } else {
+      fs.appendFile(exports.paths.list,'\n' + helper.urlhost(uri), callback);
+    }
+  });
 };
 
-exports.isUrlArchived = function(){
+exports.isUrlArchived = function(uri, callback){
+  exports.isUrlInList(uri, function(found) {
+    fs.exists(exports.archiveFilePath(helper.urlhost(uri) + '.html'), function(exists){
+      callback(uri,exists);
+    });
+  });
 };
 
-exports.downloadUrls = function(){
+exports.downloadUrls = function(uri, callback){
+  request('http://' + url.parse(uri).host, function (error, response, body) {
+    if (!error && response.statusCode == 200) {
+      fs.writeFile(exports.archiveFilePath(helper.urlhost(uri) + '.html'),body, callback);
+    }
+  })
 };
