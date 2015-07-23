@@ -24,8 +24,15 @@ exports.getExt = function(file) {
 }
 
 exports.urlhost = function(uri) {
+  if (!uri) { return ''; }
   if (uri.indexOf('://') == -1) { uri = 'http://' + uri; }
   return url.parse(uri).hostname;
+}
+
+exports.urlpath = function(uri) {
+  if (!uri) { return ''; }
+  if (uri.indexOf('://') == -1) { uri = 'http://' + uri; }
+  return url.parse(uri).pathname;
 }
 
 exports.serveAssets = function(res, asset, callback) {

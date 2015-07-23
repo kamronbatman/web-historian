@@ -60,7 +60,7 @@ describe("server", function() {
           .send({ url: url })
           .expect(302, function (err) {
             if (!err) {
-              var fileContents = fs.readFileSync(archive.paths.list, 'utf8');
+              var fileContents = fs.readFileSync(archive.paths.list, 'utf-8');
               expect(fileContents).to.equal(url + "\n");
             }
 

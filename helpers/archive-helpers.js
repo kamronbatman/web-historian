@@ -3,6 +3,7 @@ var url = require('url');
 var path = require('path');
 var helper = require('../web/http-helpers.js');
 var _ = require('underscore');
+var request = require('request');
 
 /*
  * You will need to reuse the same paths many times over in the course of this sprint.
@@ -14,6 +15,7 @@ var _ = require('underscore');
 exports.rawPaths = {
   siteAssets: '../web/public',
   archivedSites: '../web/archives/sites',
+  mainSite: '../web',
   list: path.join(__dirname, '../web/archives/sites.txt')
 };
 
@@ -29,6 +31,10 @@ exports.publicPath = function(url) {
 
 exports.archivePath = function(url) {
   return path.join( '/archives/sites/', url );
+}
+
+exports.mainSiteFilePath = function(url) {
+  return path.join( __dirname, exports.rawPaths.mainSite, url );
 }
 
 exports.publicFilePath = function(url) {
@@ -50,8 +56,8 @@ exports.initialize = function(pathsObj){
 // modularize your code. Keep it clean!
 
 exports.readListOfUrls = function(callback){
-  fs.readFile(exports.paths.list, function(err, data) {
-    callback(data.toString().split('\n'));
+  fs.readFile(exports.paths.list, 'utf-8', function(err, data) {
+    callback(data.split('\n'));
   });
 };
 
@@ -63,26 +69,31 @@ exports.isUrlInList = function(uri, callback){
 
 exports.addUrlToList = function(uri, callback){
   exports.isUrlInList(uri, function(found) {
-    if (found) {
-      console.log('URL,', helper.urlhost(uri), 'already listed.');
-    } else {
-      fs.appendFile(exports.paths.list,'\n' + helper.urlhost(uri), callback);
+    if (!found) {
+      fs.appendFile(exports.paths.list,helper.urlhost(uri) + '\n', callback);
     }
   });
 };
 
 exports.isUrlArchived = function(uri, callback){
   exports.isUrlInList(uri, function(found) {
-    fs.exists(exports.archiveFilePath(helper.urlhost(uri) + '.html'), function(exists){
+    fs.exists(exports.archiveFilePath(helper.urlhost(uri)), function(exists){
       callback(uri,exists);
     });
   });
 };
 
-exports.downloadUrls = function(uri, callback){
-  request('http://' + url.parse(uri).host, function (error, response, body) {
-    if (!error && response.statusCode == 200) {
-      fs.writeFile(exports.archiveFilePath(helper.urlhost(uri) + '.html'),body, callback);
-    }
-  })
+exports.downloadUrls = function(urls, callback){
+  _.each(urls, function(uri){
+    exports.isUrlArchived(uri, function(uri,exists){
+      if (!exists) {
+        uri = 'http://' + uri;
+        request(uri, function (error, response, body) {
+          if (!error && response.statusCode == 200) {
+            fs.writeFile(exports.archiveFilePath(helper.urlhost(uri)),body, callback);
+          }
+        })
+      }
+    })
+  });
 };
