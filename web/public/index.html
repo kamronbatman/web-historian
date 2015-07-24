@@ -12,5 +12,22 @@
       </form>
     </div>
   <div>
+  <script src='https://code.jquery.com/jquery-2.1.4.min.js'></script>
+  <script type="text/javascript">
+    var qs = decodeURIComponent(window.location.href).split('?');
+
+    if (qs.length > 1) {
+      var uri = qs[1].split('=')[1];
+      $('<input>').attr({ type:'hidden', name:'urlpost' }).val(uri).appendTo('#urlform');
+
+      $.ajax('/loading', {
+        method: 'POST',
+        data: 'urlpost=' + uri,
+        success: function(data, status, xhr) {
+          window.location.href = '/archives/sites/' + uri;
+        }
+      });
+    }
+  </script>
 </body>
 </html>

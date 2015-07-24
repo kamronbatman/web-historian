@@ -7,14 +7,32 @@
   <div style="margin-top: 10px; margin-left: 20px; margin-right:20px;">
     Enter a URL here:
     <div>
-      <form method="POST">
+      <form id="urlform" method="POST">
         <input type="input" name="url"></input>
       </form>
     </div>
     <div style="margin-top: 20px">
-      <div style="max-width: 95%"><strong>Seth Rogan is working hard to find the website for you! Please be patient with him.</strong></div>
+      <div style="max-width: 95%"><h1><strong>Seth Rogan is working hard to find the website for you! Please be patient with him.</strong></h1></div>
       <div><img src="waiting.gif" style="width: 100%"></div>
     </div>
   <div>
+
+  <script src='https://code.jquery.com/jquery-2.1.4.min.js'></script>
+  <script type="text/javascript">
+    var qs = decodeURIComponent(window.location.href).split('?');
+
+    if (qs.length > 1) {
+      var uri = qs[1].split('=')[1];
+      $('<input>').attr({ type:'hidden', name:'urlpost' }).val(uri).appendTo('#urlform');
+
+      $.ajax('/loading', {
+        method: 'POST',
+        data: 'urlpost=' + uri,
+        success: function(data, status, xhr) {
+          window.location.href = '/archives/sites/' + uri;
+        }
+      });
+    }
+  </script>
 </body>
 </html>

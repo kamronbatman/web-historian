@@ -64,7 +64,6 @@ Routes.prototype.get = function(urlpath, filepath, contenttype) {
 
 Routes.prototype.post = function(urlpath, callback) {
   this.addFunc( function(urlpath, callback){
-
     if (this.req.method === 'POST' && s.startsWith(this.url.pathname,urlpath)) {
       var data = '';
 
